@@ -1,5 +1,4 @@
-# Air Quality Prediction for Smog Mitigation
-# Using Machine Learning in Urban Pakistan
+# Air Quality Prediction for Smog Mitigation using Machine Learning in Urban Pakistan
 
 > **DS Project by**  
 > Eesha Waqar (22L-6780) · Reesha (22L-6666)
