@@ -18,11 +18,19 @@ warnings.filterwarnings("ignore")
 # PAGE CONFIG
 # ─────────────────────────────────────────────
 st.set_page_config(
-    page_title="AirSight PK — Lahore AQI Forecast",
-    page_icon="🌫️",
+    page_title="F-Aloodah — Lahore AQI Forecast",
+    page_icon="logo.png",
     layout="wide"
 )
 
+st.markdown("""
+<style>
+
+    [data-testid="stSidebar"] {
+        background-color: #0c524a;
+    }
+</style>
+""", unsafe_allow_html=True)
 # ─────────────────────────────────────────────
 # HELPERS
 # ─────────────────────────────────────────────
@@ -37,7 +45,7 @@ def get_aqi_category(pm25):
     elif pm25 <= 100: return "Moderate",       "🟡"
     elif pm25 <= 200: return "Unhealthy",      "🟠"
     elif pm25 <= 300: return "Very Unhealthy", "🔴"
-    else:             return "Hazardous",       "🟣"
+    else:             return "Hazardous",      "🟣"
 
 def cat_num(v):
     if v <= 50:    return 0
@@ -125,20 +133,28 @@ def train_models(df):
 # ─────────────────────────────────────────────
 # HEADER
 # ─────────────────────────────────────────────
-st.title("🌫️ AirSight PK")
-st.caption("Air Quality Prediction · Lahore, Pakistan · Eesha & Reesha · DS 2025")
+from PIL import Image
+logo = Image.open("logo.png")
+
+col1, col2 = st.columns([1, 1])
+with col1:
+        st.title("F-ALOODAH")
+        st.caption("An air quality prediction project by Eesha & Reesha")
+ 
+with col2:
+   st.image(logo, width=150)
 st.markdown("---")
 
 # ─────────────────────────────────────────────
 # LOAD & TRAIN
 # ─────────────────────────────────────────────
 try:
-    with st.spinner("⏳ Loading data and training models — takes about 1 minute..."):
+    with st.spinner("Loading data and training models — takes about 1 minute..."):
         df = load_data()
         results, feat_imp, scaler, rf, lr, xgb, feature_cols = train_models(df)
-    st.success("✅ Models ready!")
+    st.success("Models ready!")
 except Exception as e:
-    st.error(f"❌ Something went wrong: {e}")
+    st.error(f"Something went wrong: {e}")
     st.code(traceback.format_exc())
     st.stop()
 
@@ -146,23 +162,23 @@ except Exception as e:
 # SIDEBAR
 # ─────────────────────────────────────────────
 with st.sidebar:
-    st.header("🎛️ Predict AQI")
+    st.header("Predict AQI")
     st.markdown("Adjust weather conditions below:")
 
-    temp  = st.slider("🌡️ Temperature (°C)",  -5.0, 45.0, 18.0, 0.5)
-    humid = st.slider("💧 Humidity (%)",        10.0, 100.0, 60.0, 1.0)
-    wind  = st.slider("💨 Wind Speed (m/s)",     0.0, 10.0, 2.5, 0.1)
-    lag1  = st.slider("📅 Yesterday's PM2.5",    0.0, 500.0, 120.0, 1.0)
-    lag7  = st.slider("📅 Last Week's PM2.5",    0.0, 500.0, 100.0, 1.0)
-    month = st.selectbox("🗓️ Month", list(range(1, 13)),
+    temp  = st.slider("Temperature (°C)",  -5.0, 45.0, 18.0, 0.5)
+    humid = st.slider("Humidity (%)",        10.0, 100.0, 60.0, 1.0)
+    wind  = st.slider("Wind Speed (m/s)",     0.0, 10.0, 2.5, 0.1)
+    lag1  = st.slider("Yesterday's PM2.5",    0.0, 500.0, 120.0, 1.0)
+    lag7  = st.slider("Last Week's PM2.5",    0.0, 500.0, 100.0, 1.0)
+    month = st.selectbox("Month", list(range(1, 13)),
                          format_func=lambda m: ["Jan","Feb","Mar","Apr","May","Jun",
                                                 "Jul","Aug","Sep","Oct","Nov","Dec"][m-1],
                          index=10)
     smog = 1 if month in [10, 11, 12, 1, 2] else 0
-    st.info(f"Smog season: {'🟠 Yes (Oct–Feb)' if smog else '🟢 No'}")
+    st.info(f"Smog season: {'Yes (Oct–Feb)' if smog else 'No'}")
 
     st.markdown("---")
-    st.subheader("🤖 Model")
+    st.subheader("Model")
     pred_model = st.radio("Choose model:", ["Linear Regression", "Random Forest", "XGBoost"])
 
 # ─────────────────────────────────────────────
@@ -175,7 +191,7 @@ pred   = float(model_map[pred_model].predict(inp_sc)[0])
 pred   = max(0, pred)
 cat, emoji = get_aqi_category(pred)
 
-st.subheader("📍 Live Prediction")
+st.subheader("Live Prediction")
 c1, c2, c3 = st.columns(3)
 c1.metric("Predicted PM2.5", f"{pred:.1f} µg/m³")
 c2.metric("AQI Category", f"{emoji} {cat}")
@@ -185,7 +201,7 @@ st.markdown("---")
 # ─────────────────────────────────────────────
 # TABS
 # ─────────────────────────────────────────────
-tab1, tab2, tab3 = st.tabs(["📈 Historical Trends", "🤖 Model Comparison", "🔍 Feature Importance"])
+tab1, tab2 = st.tabs(["Historical Trends", "Model Comparison"])
 
 # ── TAB 1 ─────────────────────────────────────
 with tab1:
@@ -261,24 +277,5 @@ with tab2:
     st.pyplot(fig4)
     plt.close()
 
-# ── TAB 3 ─────────────────────────────────────
-with tab3:
-    st.subheader("Feature Importance — Random Forest")
-    fig5, ax5 = plt.subplots(figsize=(9, 4))
-    colors_fi = ["#e57373" if "pm25" in f else "#1f77b4" for f in feat_imp.index]
-    feat_imp.plot(kind="barh", ax=ax5, color=colors_fi, alpha=0.85)
-    ax5.set_title("What drives PM2.5 prediction?")
-    ax5.set_xlabel("Importance Score")
-    st.pyplot(fig5)
-    plt.close()
-
-    st.info("""
-    🔴 **Lag features** (yesterday's & last week's PM2.5) are the strongest predictors — pollution persists over days.
-
-    🔵 **Temperature (T2M)** is the most important weather variable — cold air traps pollutants near ground level.
-
-    🔵 **Smog season flag** captures Oct–Feb peak pollution months effectively.
-    """)
-
 st.markdown("---")
-st.caption("AirSight PK · Eesha Waqar & Reesha · DS Project 2025 · Data: OpenAQ + NASA POWER")
+st.caption("F-ALOODAH · Eesha & Reesha · DS Project · Data: OpenAQ + NASA POWER")
