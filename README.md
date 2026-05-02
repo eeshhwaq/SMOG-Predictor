@@ -141,8 +141,3 @@ seaborn
 - Improve LSTM with larger historical dataset
 - Deploy on Streamlit Cloud for public access
 
----
-
-<div align="center">
-  Made with 🤍 at FAST NUCES Lahore · 2025
-</div>
